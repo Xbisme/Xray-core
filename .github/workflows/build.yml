@@ -14,37 +14,47 @@ jobs:
         with:
           go-version: '1.25'
       
-      - name: Install dependencies
+      - name: Install cross-compilers
         run: |
           sudo apt-get update
-          sudo apt-get install -y gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-multilib
+          sudo apt-get install -y gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf
       
-      - name: Build
+      - name: Build ARM64
         run: |
           export GOTOOLCHAIN=auto
-          
           CC=aarch64-linux-gnu-gcc CGO_ENABLED=1 GOOS=linux GOARCH=arm64 \
             go build -o xray-arm64 -trimpath \
             -ldflags "-s -w -linkmode external -extldflags '-Wl,-z,max-page-size=16384'" ./main
-          
+      
+      - name: Build ARM32
+        run: |
+          export GOTOOLCHAIN=auto
           CC=arm-linux-gnueabihf-gcc CGO_ENABLED=1 GOOS=linux GOARCH=arm GOARM=7 \
             go build -o xray-arm32 -trimpath \
             -ldflags "-s -w -linkmode external -extldflags '-Wl,-z,max-page-size=16384'" ./main
-          
+      
+      - name: Build x86_64
+        run: |
+          export GOTOOLCHAIN=auto
           CGO_ENABLED=1 GOOS=linux GOARCH=amd64 \
             go build -o xray-x64 -trimpath \
             -ldflags "-s -w -linkmode external -extldflags '-Wl,-z,max-page-size=16384'" ./main
-          
+      
+      - name: Build x86
+        run: |
+          export GOTOOLCHAIN=auto
+          sudo apt-get install -y gcc-multilib
           CGO_ENABLED=1 GOOS=linux GOARCH=386 \
             go build -o xray-x86 -trimpath \
             -ldflags "-s -w -linkmode external -extldflags '-Wl,-z,max-page-size=16384'" ./main
-          
+      
+      - name: Create jniLibs
+        run: |
           mkdir -p jniLibs/{arm64-v8a,armeabi-v7a,x86_64,x86}
           cp xray-arm64 jniLibs/arm64-v8a/libxray.so
           cp xray-arm32 jniLibs/armeabi-v7a/libxray.so
           cp xray-x64 jniLibs/x86_64/libxray.so
           cp xray-x86 jniLibs/x86/libxray.so
-          
           ls -lh jniLibs/*/libxray.so
       
       - uses: actions/upload-artifact@v4
