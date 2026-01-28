@@ -16,17 +16,8 @@ jobs:
       
       - name: Install dependencies
         run: |
-          sudo dpkg --add-architecture arm64
-          sudo dpkg --add-architecture armhf
-          sudo dpkg --add-architecture i386
           sudo apt-get update
-          sudo apt-get install -y \
-            gcc-aarch64-linux-gnu \
-            gcc-arm-linux-gnueabihf \
-            gcc-multilib \
-            libc6-dev-arm64-cross \
-            libc6-dev-armhf-cross \
-            libc6-dev-i386
+          sudo apt-get install -y gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf gcc-multilib
       
       - name: Build
         run: |
@@ -44,7 +35,7 @@ jobs:
             go build -o xray-x64 -trimpath \
             -ldflags "-s -w -linkmode external -extldflags '-Wl,-z,max-page-size=16384'" ./main
           
-          CC=gcc CGO_ENABLED=1 GOOS=linux GOARCH=386 \
+          CGO_ENABLED=1 GOOS=linux GOARCH=386 \
             go build -o xray-x86 -trimpath \
             -ldflags "-s -w -linkmode external -extldflags '-Wl,-z,max-page-size=16384'" ./main
           
